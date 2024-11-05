@@ -9,14 +9,15 @@ import java.nio.charset.StandardCharsets;
 
 public class PingMonitor {
 
-    private static final String SERVER_IP = "";
-    private static final String SERVER_IP2 ="";
-    private static final String SERVER_IP3 ="";
-    private static final String SERVER_IP4 ="";
-    private static final String SERVER_IP5 ="";
-    private static final String SERVER_IP6 ="";
-    private static final String TELEGRAM_BOT_TOKEN = ""; // Replace with your bot token
-    private static final String CHAT_ID = ""; // Replace with your chat ID
+    private static final String SERVER_IP = "192.168.10.246";
+    private static final String SERVER_IP2 ="10.1.5.19";
+    private static final String SERVER_IP3 ="10.1.5.150";
+    private static final String SERVER_IP4 ="10.1.5.106";
+    private static final String SERVER_IP5 ="10.1.5.17";
+    private static final String SERVER_IP6 ="10.1.5.11";
+    private static final String TELEGRAM_BOT_TOKEN = "912533104:AAHv5WShRw45YX2DjEpcysHBnBEEnVTmMAU"; // Replace with your bot token
+    private static final String CHAT_ID = "481872296"; // Replace with your chat ID
+    private static int lastUpdateId = 0;
 
     public static void main(String[] args) {
 
@@ -153,6 +154,7 @@ public class PingMonitor {
                 SSMessage6 = false;
             }
 
+            checkTelegramUpdates();
 
             try {
                 Thread.sleep(5000);
@@ -176,23 +178,65 @@ public class PingMonitor {
             }
         }
 
-        private static void sendTelegramMessage (String message){
-            try {
-                String urlString = "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage";
-                URL url = new URL(urlString);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setDoOutput(true);
-                String params = "chat_id=" + CHAT_ID + "&text=" + message;
 
-                try (OutputStream os = conn.getOutputStream()) {
-                    os.write(params.getBytes());
-                    os.flush();
+    private static void sendTelegramMessage(String message) {
+        try {
+            String urlString = "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage";
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            String params = "chat_id=" + CHAT_ID + "&text=" + message;
+
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(params.getBytes());
+                os.flush();
+            }
+
+            conn.getResponseCode(); // To execute the request
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void checkTelegramUpdates() {
+        try {
+            String urlString = "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/getUpdates?offset=" + (lastUpdateId + 1);
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setDoOutput(true);
+
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
                 }
+                String updates = response.toString();
+                processUpdates(updates);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-                conn.getResponseCode(); // To execute the request
-            } catch (Exception e) {
-                e.printStackTrace();
+    private static void processUpdates(String updates) {
+        // Parse the updates string to find incoming messages
+        if (updates.contains("\"update_id\":")) {
+            String[] parts = updates.split("\"update_id\":");
+            for (int i = 1; i < parts.length; i++) {
+                String updateIdStr = parts[i].split(",")[0].trim();
+                int updateId = Integer.parseInt(updateIdStr);
+                if (updateId > lastUpdateId) {
+                    lastUpdateId = updateId; // Update last update ID
+                    String messageText = parts[i].split("\"text\":\"")[1].split("\"")[0]; // Extracting the message text
+                    if (messageText.equalsIgnoreCase("status")) {
+                        sendTelegramMessage("The Ping Monitor is running.");
+                    }
+                }
             }
         }
     }
+
+}
