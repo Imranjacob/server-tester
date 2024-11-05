@@ -15,8 +15,8 @@ public class PingMonitor {
     private static final String SERVER_IP4 ="10.1.5.106";
     private static final String SERVER_IP5 ="10.1.5.17";
     private static final String SERVER_IP6 ="10.1.5.11";
-    private static final String TELEGRAM_BOT_TOKEN = "912533104:AAHv5WShRw45YX2DjEpcysHBnBEEnVTmMAU"; // Replace with your bot token
-    private static final String CHAT_ID = "481872296"; // Replace with your chat ID
+    private static final String TELEGRAM_BOT_TOKEN = ""; // Replace with your bot token
+    private static final String CHAT_ID = ""; // Replace with your chat ID
     private static int lastUpdateId = 0;
 
     public static void main(String[] args) {
